@@ -38,14 +38,13 @@ async function loadProducts() {
   if (IS_SERVER_MODE) {
     try {
       const res = await fetch('/api/products');
-      const serverProducts = await res.json();
-      products = serverProducts.length > 0 ? serverProducts : defaultProducts;
+      products = await res.json();
     } catch (err) {
       console.error("فشل جلب المنتجات من الخادم، استخدام الذاكرة المحلية كبديل", err);
-      products = JSON.parse(localStorage.getItem('thes_house_products')) || defaultProducts;
+      products = JSON.parse(localStorage.getItem('thes_house_products')) || [];
     }
   } else {
-    products = JSON.parse(localStorage.getItem('thes_house_products')) || defaultProducts;
+    products = JSON.parse(localStorage.getItem('thes_house_products')) || [];
   }
 }
 

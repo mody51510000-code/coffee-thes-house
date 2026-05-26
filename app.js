@@ -8,14 +8,6 @@ const ALLOWED_CODES_REVERSED = ["0102rrh", "0102dayaom"];
 const WHATSAPP_PHONE = "966504546041"; // الرقم الدولي للسعودية بدون أصفار إضافية
 
 const SAMPLE_IMAGES = [
-  { name: 'لاتيه بارد', url: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500&auto=format&fit=crop&q=80' },
-  { name: 'إسبريسو / كورتادو', url: 'https://images.unsplash.com/photo-1510707577719-ee7c14b5740a?w=500&auto=format&fit=crop&q=80' },
-  { name: 'قهوة مقطرة V60', url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كابتشينو دافئ', url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كوكيز', url: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كرواسون', url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كيكة وحلويات', url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=80' },
-  { name: 'أكواب ومنتجات', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80' }
 ];
 
 // ==========================================================================

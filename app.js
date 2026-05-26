@@ -1,21 +1,26 @@
+// ==========================================================================
+// كوفي Thes House 🏠 - محرك جافا سكريبت التفاعلي الهجين
+// يدعم التشغيل المنفرد (localStorage) أو الشبكي المزدوج (Express API)
+// ==========================================================================
 
 // ==========================================================================
-// 1. الثوابت وإعداد عينات الصور الفاخرة
+// 1. الثوابت وقائمة الرموز وعينات الصور
 // ==========================================================================
-// الكود السري للمدير (مكتوب بشكل مقلوب لحمايته من الفحص العادي بالمتصفح)
-// لتغييره، اكتب الكود مقلوباً هنا (مثال: hrr2010 يصبح 0102rrh)
+// تخزين الأكواد مقلوبة لحمايتها من الفحص المباشر في المتصفح
+// الأكواد المدعومة: hrr2010 (مقلوبه 0102rrh) | moayad2010 (مقلوبه 0102dayaom)
 const ALLOWED_CODES_REVERSED = ["0102rrh", "0102dayaom"];
-const WHATSAPP_PHONE = "966504546041"; // الرقم الدولي للسعودية بدون أصفار إضافية
+const WHATSAPP_PHONE = "966504546041"; // رقم هاتف المالك المخصص للطلب
 
+// عينات الصور الجاهزة لتسهيل إضافة المنتجات من لوحة المدير
 const SAMPLE_IMAGES = [
-  { name: 'لاتيه بارد', url: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500&auto=format&fit=crop&q=80' },
-  { name: 'إسبريسو / كورتادو', url: 'https://images.unsplash.com/photo-1510707577719-ee7c14b5740a?w=500&auto=format&fit=crop&q=80' },
-  { name: 'قهوة مقطرة V60', url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كابتشينو دافئ', url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كوكيز', url: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كرواسون', url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80' },
-  { name: 'كيكة وحلويات', url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=80' },
-  { name: 'أكواب ومنتجات', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80' }
+  { name: 'لاتيه بارد ☕', url: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500&auto=format&fit=crop&q=80' },
+  { name: 'إسبريسو / كورتادو ☕', url: 'https://images.unsplash.com/photo-1510707577719-ee7c14b5740a?w=500&auto=format&fit=crop&q=80' },
+  { name: 'قهوة مقطرة V60 ☕', url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&auto=format&fit=crop&q=80' },
+  { name: 'كابتشينو دافئ ☕', url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&auto=format&fit=crop&q=80' },
+  { name: 'كوكيز كلاسيك 🍪', url: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500&auto=format&fit=crop&q=80' },
+  { name: 'كرواسون مورق 🥐', url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80' },
+  { name: 'كيك وحلويات 🍰', url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=80' },
+  { name: 'أكواب ومنتجات 🛍️', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80' }
 ];
 
 // ==========================================================================
@@ -33,7 +38,7 @@ let searchQuery = '';
 let selectedImageSource = 'select'; // 'select' | 'url' | 'file'
 let uploadedFileBase64 = '';
 
-// جلب قائمة المنتجات من الخادم أو من الذاكرة المحلية كحالة بديلة
+// جلب قائمة المنتجات من الخادم أو من الذاكرة المحلية كحالة بديلة (تبدأ فارغة)
 async function loadProducts() {
   if (IS_SERVER_MODE) {
     try {
@@ -80,12 +85,20 @@ async function deleteProductFromServer(prodId) {
   }
 }
 
-// استعادة المنيو الافتراضي الأصلي
+// استعادة المنيو الافتراضي الأصلي للتجربة
 async function resetProductsToServer() {
-  products = defaultProducts;
+  products = window.defaultProducts || [];
   if (IS_SERVER_MODE) {
     try {
       await fetch('/api/products/reset', { method: 'POST' });
+      // نقوم برفع المنتجات الافتراضية واحداً تلو الآخر لتخزينها بالخادم
+      for (const p of products) {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(p)
+        });
+      }
     } catch (err) {
       console.error("فشل استعادة المنتجات الافتراضية على الخادم", err);
     }
@@ -127,7 +140,7 @@ async function placeNewOrder(newOrder) {
   }
 }
 
-// تحديث حالة الطلب (قيد الانتظار -> جاري التحضير -> تم التوصيل)
+// تحديث حالة الطلب
 async function updateOrderStatusOnServer(orderId, newStatus) {
   const order = orders.find(o => o.id === orderId);
   if (!order) return;
@@ -155,36 +168,6 @@ async function clearOrdersOnServer() {
     }
   } else {
     localStorage.setItem('thes_house_orders', JSON.stringify(orders));
-  }
-}
-
-// تهيئة وتشغيل المزامنة الدورية
-async function initApp() {
-  await loadProducts();
-  await loadOrders();
-  
-  updateCartCount();
-  renderProducts();
-  loadSampleImages();
-  checkAdminState();
-
-  // تحديث دوري للطلبات كل 5 ثوانٍ عند العمل عبر الخادم (Wi-Fi)
-  if (IS_SERVER_MODE) {
-    setInterval(async () => {
-      await loadOrders();
-      await loadProducts();
-      
-      if (document.getElementById('orders-view').style.display === 'block') {
-        renderOrdersHistory();
-      }
-      if (document.getElementById('admin-view').style.display === 'block') {
-        renderAdminOrders();
-        renderAdminProducts();
-      }
-      if (document.getElementById('menu-view').style.display === 'block' && document.activeElement !== searchInput) {
-        renderProducts();
-      }
-    }, 5000);
   }
 }
 
@@ -255,7 +238,7 @@ const fileUploadPreview = document.getElementById('file-upload-preview');
 const removeFilePreviewBtn = document.getElementById('remove-file-preview-btn');
 
 // ==========================================================================
-// 4. نظام الإشعارات المنبثقة (Toasts System)
+// 4. نظام الإشعارات المنبثقة الفاخرة (Toast Notifications)
 // ==========================================================================
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
@@ -274,7 +257,6 @@ function showToast(message, type = 'success') {
   container.appendChild(toast);
   lucide.createIcons();
 
-  // إخفاء وحذف الإشعار بعد 3 ثواني
   setTimeout(() => {
     toast.classList.add('removing');
     toast.addEventListener('animationend', () => {
@@ -287,7 +269,6 @@ function showToast(message, type = 'success') {
 // 5. التوجيه وإدارة العروض (View Management)
 // ==========================================================================
 function switchView(viewName) {
-  // إخفاء جميع الصفحات
   menuView.style.display = 'none';
   ordersView.style.display = 'none';
   adminView.style.display = 'none';
@@ -296,12 +277,10 @@ function switchView(viewName) {
   ordersView.className = 'inactive-view';
   adminView.className = 'inactive-view';
 
-  // إلغاء تفعيل روابط القائمة
   navHomeBtn.classList.remove('active');
   navOrdersBtn.classList.remove('active');
   navAdminBtn.classList.remove('active');
 
-  // إخفاء الهيرو في حال لم نكن في القائمة الرئيسية
   const heroBanner = document.getElementById('hero-banner');
   
   if (viewName === 'menu') {
@@ -329,13 +308,12 @@ function switchView(viewName) {
     renderAdminOrders();
   }
   
-  // إغلاق القائمة في الجوال بعد الاختيار
   navMenu.classList.remove('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ==========================================================================
-// 6. التحقق من كود المدير (Admin Authorization)
+// 6. التحقق من كود المدير المشفّر (Reversed Obfuscation Check)
 // ==========================================================================
 function checkAdminState() {
   if (isAdmin) {
@@ -355,6 +333,7 @@ function checkAdminState() {
 function handleCodeSubmit() {
   const enteredCode = adminCodeInput.value.trim();
   const reversedInput = enteredCode.split('').reverse().join('');
+  
   if (ALLOWED_CODES_REVERSED.includes(reversedInput)) {
     isAdmin = true;
     localStorage.setItem('thes_house_is_admin', 'true');
@@ -391,7 +370,6 @@ function updateCartCount() {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   cartCountBadge.innerText = totalItems;
   
-  // حساب المجموع الكلي
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   cartTotalPrice.innerText = total;
 
@@ -480,7 +458,6 @@ function renderCartDrawer() {
   
   lucide.createIcons();
 
-  // ربط الأزرار
   cartItemsContainer.querySelectorAll('.dec-qty').forEach(btn => {
     btn.addEventListener('click', () => changeCartQty(btn.dataset.id, -1));
   });
@@ -504,7 +481,7 @@ function toggleCartDrawer(open) {
 }
 
 // ==========================================================================
-// 8. إرسال الطلب وإتمام الشراء عبر الواتساب
+// 8. إرسال الطلب وإتمام الشراء (Checkout & Hybrid Sync)
 // ==========================================================================
 function handleCheckout(e) {
   e.preventDefault();
@@ -524,11 +501,10 @@ function handleCheckout(e) {
     return;
   }
 
-  // 1. توليد كود تعريف عشوائي للطلب
   const orderId = `TH-${Math.floor(1000 + Math.random() * 9000)}`;
   const timestamp = new Date().toLocaleString('ar-SA', { hour12: true });
 
-  // 2. تجهيز نص رسالة الواتساب
+  // تجهيز نص فاتورة الواتساب
   let orderDetailsText = "";
   cart.forEach(item => {
     orderDetailsText += `• ${item.quantity}x ${item.name} - ${item.price * item.quantity} ريال\n`;
@@ -551,7 +527,6 @@ function handleCheckout(e) {
   const encodedText = encodeURIComponent(rawMessage);
   const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
 
-  // 3. حفظ الطلب في سجل العائلة (Orders History)
   const newOrder = {
     id: orderId,
     customerName: name,
@@ -560,12 +535,12 @@ function handleCheckout(e) {
     items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
     total: total,
     notes: notes,
-    status: 'pending' // pending | preparing | delivered
+    status: 'pending'
   };
 
   placeNewOrder(newOrder);
 
-  // 4. تفريغ السلة وإغلاقها
+  // تفريغ السلة وإغلاقها
   cart = [];
   updateCartCount();
   toggleCartDrawer(false);
@@ -573,12 +548,12 @@ function handleCheckout(e) {
 
   showToast(IS_SERVER_MODE ? "تم إرسال طلبك بنجاح للمطبخ! ☕" : "تم تسجيل طلبك بنجاح! سيتم تحويلك الآن لتأكيده عبر الواتساب...");
   
-  // 5. فتح الواتساب في نافذة جديدة (فقط إذا لم نكن في وضع الخادم المحلي)
+  // التحويل للواتساب فقط إذا كان التطبيق يعمل منفصلاً (Offline local file)
   setTimeout(() => {
     if (!IS_SERVER_MODE) {
       window.open(whatsappUrl, '_blank');
     }
-    switchView('orders'); // الانتقال لصفحة سجل العائلة لمتابعة حالة الطلب
+    switchView('orders');
   }, 1500);
 }
 
@@ -588,7 +563,6 @@ function handleCheckout(e) {
 function renderProducts() {
   productsContainer.innerHTML = '';
   
-  // تصفية المنتجات بناءً على الفئة والبحث
   const filteredProducts = products.filter(p => {
     const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -600,7 +574,8 @@ function renderProducts() {
     productsContainer.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
         <i data-lucide="compass"></i>
-        <p>لم نجد أي منتجات تطابق بحثك حالياً.</p>
+        <p>لا توجد مشروبات أو مأكولات معروضة حالياً.</p>
+        ${isAdmin ? `<p style="font-size:0.85rem; color:var(--primary)">أضف منتجك الأول من لوحة التحكم باليسار 👈</p>` : ''}
       </div>
     `;
     lucide.createIcons();
@@ -611,7 +586,6 @@ function renderProducts() {
     const card = document.createElement('div');
     card.className = 'product-card';
     
-    // تصنيف النص
     let catText = "منتجات";
     if (product.category === 'drinks') catText = "مشروب ☕";
     if (product.category === 'food') catText = "مأكول 🍰";
@@ -636,7 +610,6 @@ function renderProducts() {
 
   lucide.createIcons();
 
-  // ربط أزرار السلة
   productsContainer.querySelectorAll('.add-to-cart-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       addToCart(btn.dataset.id);
@@ -645,7 +618,7 @@ function renderProducts() {
 }
 
 // ==========================================================================
-// 10. عرض سجل طلبات العائلة
+// 10. عرض سجل طلبات العائلة وتتبع حالتها
 // ==========================================================================
 function renderOrdersHistory() {
   const container = document.getElementById('family-orders-list');
@@ -666,12 +639,11 @@ function renderOrdersHistory() {
     const card = document.createElement('div');
     card.className = 'order-card';
     
-    // ترجمة الحالة وتجهيز اللون
     let statusClass = 'status-pending';
     let statusText = 'قيد الانتظار ⏳';
     if (order.status === 'preparing') {
       statusClass = 'status-preparing';
-      statusText = 'يتم التحضير حالياً ☕';
+      statusText = 'جاري التحضير ☕';
     } else if (order.status === 'delivered') {
       statusClass = 'status-delivered';
       statusText = 'تم التوصيل بالعافية 🎉';
@@ -714,7 +686,7 @@ function renderOrdersHistory() {
 }
 
 // ==========================================================================
-// 11. إدارة لوحة التحكم (Admin Dashboard Operations)
+// 11. إدارة لوحة تحكم المالك (Admin Panel Operations)
 // ==========================================================================
 function loadSampleImages() {
   samplesGrid.innerHTML = '';
@@ -733,7 +705,6 @@ function loadSampleImages() {
     samplesGrid.appendChild(item);
   });
 
-  // تعيين عينة البداية الافتراضية
   selectedSampleUrlInput.value = SAMPLE_IMAGES[0].url;
 }
 
@@ -759,7 +730,7 @@ function handleImageSourceSwitch(source) {
   }
 }
 
-// قراءة الملف وتحويله إلى Base64 للحفظ المحلي
+// تحويل ملف الصورة المحلي إلى Base64 لتخزينه في الخادم والذاكرة
 function handleProductImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -812,12 +783,11 @@ function handleAddProduct(e) {
 
   saveProduct(newProduct);
   
-  // تصفير النموذج
   addProductForm.reset();
   removeFilePreview();
   handleImageSourceSwitch('select');
   
-  showToast("تمت إضافة المنتج الجديد إلى المنيو بنجاح! 🎉");
+  showToast("تمت إضافة المنتج الجديد بنجاح! 🎉");
   renderProducts();
   renderAdminProducts();
 }
@@ -828,8 +798,6 @@ function deleteProduct(prodId) {
 
   if (confirm(`هل أنت متأكد من رغبتك في حذف "${prod.name}" من قائمة الطعام؟`)) {
     deleteProductFromServer(prodId);
-    
-    // تنظيف السلة من المنتج إذا وُجد
     cart = cart.filter(item => item.id !== prodId);
     updateCartCount();
     
@@ -872,11 +840,7 @@ function renderAdminProducts() {
 }
 
 function changeOrderStatus(orderId, newStatus) {
-  const order = orders.find(o => o.id === orderId);
-  if (!order) return;
-
   updateOrderStatusOnServer(orderId, newStatus);
-  
   showToast(`تم تحديث حالة الطلب ${orderId} بنجاح`);
   renderAdminOrders();
 }
@@ -887,7 +851,7 @@ function renderAdminOrders() {
     adminOrdersList.innerHTML = `
       <div class="empty-state">
         <i data-lucide="clipboard" style="width: 32px; height:32px;"></i>
-        <p>لا توجد طلبات بالانتظار حالياً.</p>
+        <p>لا توجد طلبات واردة حالياً.</p>
       </div>
     `;
     lucide.createIcons();
@@ -931,16 +895,13 @@ function renderAdminOrders() {
 }
 
 // ==========================================================================
-// 12. ربط الأحداث وتشغيل التطبيق (Event Listeners & Init)
+// 12. تشغيل وتهيئة التطبيق (Init & Event Listeners)
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. تشغيل أيقونات Lucide الأساسية
   lucide.createIcons();
-
-  // 2. تهيئة وتشغيل التطبيق والاتصال بالخادم
   initApp();
 
-  // 6. التنقل بين الصفحات
+  // التنقل بين واجهات العرض
   navHomeBtn.addEventListener('click', (e) => {
     e.preventDefault();
     switchView('menu');
@@ -956,26 +917,25 @@ document.addEventListener('DOMContentLoaded', () => {
     switchView('admin');
   });
 
-  // شعار الهيدر
   document.getElementById('nav-logo').addEventListener('click', (e) => {
     e.preventDefault();
     switchView('menu');
   });
 
-  // 7. تشغيل سلة المشتريات
+  // تشغيل سلة المشتريات
   openCartBtn.addEventListener('click', () => toggleCartDrawer(true));
   closeCartBtn.addEventListener('click', () => toggleCartDrawer(false));
   cartOverlay.addEventListener('click', () => toggleCartDrawer(false));
 
-  // 8. إتمام عملية الدفع والطلب
+  // إتمام عملية الدفع والطلب
   checkoutForm.addEventListener('submit', handleCheckout);
 
-  // 9. تشغيل قائمة الجوال
+  // تشغيل قائمة الجوال
   mobileToggleBtn.addEventListener('click', () => {
     navMenu.classList.toggle('active');
   });
 
-  // 10. البحث وتصفية المنتجات
+  // تصفية وبحث المنتجات
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value;
     renderProducts();
@@ -990,15 +950,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 11. تشغيل نافذة كود المدير السري
+  // تشغيل نافذة الكود السري
   openCodeModalBtn.addEventListener('click', () => {
     if (isAdmin) {
-      // إذا كان مفتوحاً بالفعل، الضغط عليه سيقفل الصلاحيات
-      if (confirm("هل تريد تسجيل الخروج من لوحة التحكم وإلغاء تفعيل صلاحيات المالك؟")) {
+      if (confirm("هل تريد تسجيل الخروج وإلغاء تفعيل صلاحيات المدير؟")) {
         isAdmin = false;
         localStorage.setItem('thes_house_is_admin', 'false');
         checkAdminState();
-        showToast("تم قفل الصلاحيات بنجاح", "warning");
+        showToast("تم قفل لوحة التحكم وتسجيل الخروج", "warning");
       }
     } else {
       openCodeModal();
@@ -1016,7 +975,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') handleCodeSubmit();
   });
 
-  // 12. تبديل علامات تبويب صور لوحة التحكم للمدير
+  // تبديل مصادر صور المنتجات بالمدير
   imgTabSelect.addEventListener('click', () => handleImageSourceSwitch('select'));
   imgTabUrl.addEventListener('click', () => handleImageSourceSwitch('url'));
   imgTabFile.addEventListener('click', () => handleImageSourceSwitch('file'));
@@ -1024,10 +983,10 @@ document.addEventListener('DOMContentLoaded', () => {
   prodImgFileInput.addEventListener('change', handleProductImageUpload);
   removeFilePreviewBtn.addEventListener('click', removeFilePreview);
 
-  // 13. نموذج إضافة المنتجات
+  // نموذج إضافة المنتجات
   addProductForm.addEventListener('submit', handleAddProduct);
 
-  // 14. التنقل بين تبويبات لوحة المدير
+  // تبديلات لوحة تحكم المدير الفرعية
   adminOrdersTabBtn.addEventListener('click', () => {
     adminOrdersTabBtn.classList.add('active');
     adminProductsTabBtn.classList.remove('active');
@@ -1042,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('admin-orders-view').classList.add('hidden');
   });
 
-  // 15. أزرار تفريغ السجلات
+  // تفريغ الطلبات والمنيو
   clearOrdersBtn.addEventListener('click', () => {
     if (orders.length === 0) return;
     if (confirm("هل أنت متأكد من مسح جميع سجلات طلبات العائلة بالكامل؟")) {
@@ -1054,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   resetProductsBtn.addEventListener('click', () => {
-    if (confirm("هل تريد استعادة قائمة الطعام الافتراضية الأصلية؟ (سيؤدي ذلك إلى حذف المنتجات المضافة يدوياً)")) {
+    if (confirm("هل تريد استعادة قائمة عينات القهوة للتجربة؟ (سيحذف ما أضفته يدوياً)")) {
       resetProductsToServer();
       showToast("تمت استعادة المنيو الافتراضي");
       renderProducts();

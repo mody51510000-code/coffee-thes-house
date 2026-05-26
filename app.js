@@ -4,6 +4,8 @@
 // ==========================================================================
 // الكود السري للمدير (مكتوب بشكل مقلوب لحمايته من الفحص العادي بالمتصفح)
 // لتغييره، اكتب الكود مقلوباً هنا (مثال: hrr2010 يصبح 0102rrh)
+let products = JSON.parse(localStorage.getItem('thes_house_products')) || defaultProducts;
+
 const ALLOWED_CODES_REVERSED = ["0102rrh", "0102dayaom"];
 const WHATSAPP_PHONE = "966504546041"; // الرقم الدولي للسعودية بدون أصفار إضافية
 
